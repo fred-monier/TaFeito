@@ -26,7 +26,7 @@
     <string name="registro_nome_invalido">between 3 and 200 alphanumeric characters</string>
     <string name="registro_cpf_invalido">enter a valid CPF</string>
     <string name="registro_cnpj_invalido">enter a valid CNPJ</string>
-    <string name="registro_phone_invalido">enter a valid phone number</string>
+    <string name="registro_phone_invalido">enter a valid phone number (at least 10 digits)</string>
     <string name="registro_endereco_invalido">at most 200 alphanumeric characters</string>
 
 </resources>

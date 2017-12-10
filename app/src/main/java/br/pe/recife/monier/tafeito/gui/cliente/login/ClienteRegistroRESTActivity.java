@@ -248,8 +248,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity {
     private class InserirAcessoClienteRESTClientTask extends AsyncTask<String, Void, String> {
 
         private final String CAMINHO =
-                //"http://192.168.1.107:8080/TaFeito_Servidor/rest/AcessoService/acessosCliente";
-                "http://187.87.134.250:8080/TaFeito_Servidor/rest/AcessoService/acessosCliente";
+                getApplicationContext().getResources().
+                        getText(R.string.webREST_interno_URL_acessosCliente).toString();
 
         private Acesso acesso;
         private Cliente cliente;

@@ -30,7 +30,20 @@
     <string name="registro_nome_invalido">entre 3 e 200 caracteres alfanuméricos</string>
     <string name="registro_cpf_invalido">CPF inválido</string>
     <string name="registro_cnpj_invalido">CNPJ inválido</string>
-    <string name="registro_phone_invalido">Telefone inválido</string>
+    <string name="registro_phone_invalido">Telefone inválido (informe ao menos 10 dígitos)</string>
     <string name="registro_endereco_invalido">no máximo 200 caracteres alfanuméricos</string>
+
+    <!-- Servidor Web REST interno-->
+    <string name="webREST_interno_URL_acessosFornecedor"
+        translatable="false">http://192.168.1.107:8080/TaFeito_Servidor/rest/AcessoService/acessosFornecedor</string>
+    <string name="webREST_interno_URL_acessosCliente"
+        translatable="false">http://192.168.1.107:8080/TaFeito_Servidor/rest/AcessoService/acessosCliente</string>
+
+    <!-- Servidor Web REST externo-->
+    <string name="webREST_externo_URL_acessosFornecedor"
+        translatable="false">http://187.87.134.250:8080/TaFeito_Servidor/rest/AcessoService/acessosFornecedor</string>
+    <string name="webREST_externo_URL_acessosCliente"
+        translatable="false">http://187.87.134.250:8080/TaFeito_Servidor/rest/AcessoService/acessosCliente</string>
+
 
 </resources>

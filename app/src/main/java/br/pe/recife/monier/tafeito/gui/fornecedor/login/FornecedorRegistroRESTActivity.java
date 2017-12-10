@@ -27,7 +27,6 @@ import br.pe.recife.monier.tafeito.negocio.Usuario;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 import br.pe.recife.monier.tafeito.util.MaskaraCpfCnpj;
 import br.pe.recife.monier.tafeito.util.MaskaraType;
-import br.pe.recife.monier.tafeito.util.Util;
 
 public class FornecedorRegistroRESTActivity extends AppCompatActivity {
 
@@ -200,8 +199,8 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
         //telefone
         if (phone.isEmpty() || phone.length() < 10 || phone.length() > 11)
         {
-            //_phoneText.setError(getApplicationContext().getResources().getText(R.string.registro_phone_invalido).toString());
-            // valid = false;
+            _phoneText.setError(getApplicationContext().getResources().getText(R.string.registro_phone_invalido).toString());
+             valid = false;
         } else
         {
             _phoneText.setError(null);
@@ -240,8 +239,8 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
     private class InserirAcessoFornecedorRESTClientTask extends AsyncTask<String, Void, String> {
 
         private final String CAMINHO =
-                //"http://192.168.1.107:8080/TaFeito_Servidor/rest/AcessoService/acessosFornecedor";
-                "http://187.87.134.250:8080/TaFeito_Servidor/rest/AcessoService/acessosFornecedor";
+                getApplicationContext().getResources().
+                        getText(R.string.webREST_interno_URL_acessosFornecedor).toString();
 
         private Acesso acesso;
         private Fornecedor fornecedor;

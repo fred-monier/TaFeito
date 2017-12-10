@@ -199,8 +199,8 @@ public class FornecedorRegistroActivity extends AppCompatActivity {
         //telefone
         if (phone.isEmpty() || phone.length() < 10 || phone.length() > 11)
         {
-            //_phoneText.setError(getApplicationContext().getResources().getText(R.string.registro_phone_invalido).toString());
-           // valid = false;
+            _phoneText.setError(getApplicationContext().getResources().getText(R.string.registro_phone_invalido).toString());
+            valid = false;
         } else
             {
             _phoneText.setError(null);
