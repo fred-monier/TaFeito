@@ -7,12 +7,14 @@
 
     <string name="login_senha">Password</string>
     <string name="login_autenticar">Login</string>
+    <string name="login_verificando">Checking email...</string>
     <string name="login_autenticando">Authenticating...</string>
     <string name="login_falhou">Login failed</string>
     <string name="login_email_invalido">enter a valid email address</string>
     <string name="login_senha_tamanho_invalido">between 4 and 10 alphanumeric characters</string>
     <string name="login_registrar">No account yet? Create one</string>
     <string name="login_conexaoweb_inexistente">No internet connection</string>
+    <string name="login_conexaoweb_falhou">Error accessing remote server</string>
 
     <string name="registro_nome">Name</string>
     <string name="registro_phone">Phone number</string>

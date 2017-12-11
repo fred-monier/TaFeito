@@ -1,14 +1,18 @@
-package br.pe.recife.monier.tafeito.serviceREST;
+package br.pe.recife.monier.tafeito.servicerest;
 
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.net.Uri;
 import android.os.AsyncTask;
 
 import com.google.gson.Gson;
 
 import org.json.JSONObject;
 
+import java.io.BufferedWriter;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 
 import br.pe.recife.monier.tafeito.R;
@@ -23,8 +27,6 @@ public class BuscarPorLoginPorSenhaRESTClientTask extends AsyncTask<String, Void
     private String senha;
     private boolean fornecedor;
 
-    private ProgressDialog progressDialog;
-
     public BuscarPorLoginPorSenhaRESTClientTask(RESTClientTaskVO pRESTClientTaskVO, Context context,
                                                 String login, String senha, boolean fornecedor) {
         this.fRESTClientTaskVO = pRESTClientTaskVO;
@@ -37,19 +39,11 @@ public class BuscarPorLoginPorSenhaRESTClientTask extends AsyncTask<String, Void
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-
-        progressDialog = new ProgressDialog(this.contexto, R.style.AppTheme_Dark_Dialog);
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage(this.contexto.getResources().
-                getText(R.string.login_autenticando).toString());
-        progressDialog.show();
     }
 
     @Override
     protected void onPostExecute(Autenticacao aut) {
         super.onPostExecute(aut);
-
-        progressDialog.dismiss();
 
         if (aut != null){
             //onLoginSuccess(aut);
@@ -79,10 +73,26 @@ public class BuscarPorLoginPorSenhaRESTClientTask extends AsyncTask<String, Void
                 caminhoPar = caminhoPar + this.contexto.getResources().
                         getText(R.string.acessosLoginSenhaCliente).toString();
             }
-            caminhoPar = caminhoPar + "/" + login + "/" + senha;
 
-            conexao = HttpUtil.conectarGET(caminhoPar);
+            conexao = HttpUtil.conectarPOST(caminhoPar);
+
+            //Building URI
+            Uri.Builder builder = new Uri.Builder()
+                    .appendQueryParameter("login", this.login)
+                    .appendQueryParameter("senha", this.senha);
+
+            //Getting object of OutputStream from urlConnection to write some data to stream
+            OutputStream outputStream = conexao.getOutputStream();
+
+            //Writer to write data to OutputStream
+            BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+            bufferedWriter.write(builder.build().getEncodedQuery());
+            bufferedWriter.flush();
+            bufferedWriter.close();
+            outputStream.close();
+
             conexao.connect();
+            //
             //
 
             int resposta = conexao.getResponseCode();

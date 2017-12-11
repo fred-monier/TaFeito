@@ -1,4 +1,4 @@
-package br.pe.recife.monier.tafeito.serviceREST;
+package br.pe.recife.monier.tafeito.servicerest;
 
 import android.app.ProgressDialog;
 import android.content.Context;
@@ -26,8 +26,6 @@ public class InserirAcessoRESTClientTask extends AsyncTask<String, Void, String>
     private Acesso acesso;
     private Usuario usuario;
 
-    private ProgressDialog progressDialog;
-
     public InserirAcessoRESTClientTask(RESTClientTaskVO pRESTClientTaskVO, Context context,
                                        Acesso acesso, Usuario usuario) {
         this.fRESTClientTaskVO = pRESTClientTaskVO;
@@ -39,20 +37,11 @@ public class InserirAcessoRESTClientTask extends AsyncTask<String, Void, String>
     @Override
     protected void onPreExecute() {
         super.onPreExecute();
-
-        progressDialog = new ProgressDialog(this.contexto,
-                R.style.AppTheme_Dark_Dialog);
-        progressDialog.setIndeterminate(true);
-        progressDialog.setMessage(this.contexto.
-                getText(R.string.registro_criando_conta).toString());
-        progressDialog.show();
     }
 
     @Override
     protected void onPostExecute(String s) {
         super.onPostExecute(s);
-
-        progressDialog.dismiss();
 
         if (s != null && !s.equals(HttpUtil.FAILURE_RESULT)) {
 

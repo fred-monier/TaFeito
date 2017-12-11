@@ -1,5 +1,6 @@
 package br.pe.recife.monier.tafeito.gui.cliente.login;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -13,18 +14,21 @@ import android.widget.Toast;
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
 import br.pe.recife.monier.tafeito.negocio.Acesso;
-import br.pe.recife.monier.tafeito.serviceREST.RESTClientTaskVO;
+import br.pe.recife.monier.tafeito.negocio.Fornecedor;
+import br.pe.recife.monier.tafeito.servicerest.LiberadoPorLoginRESTClientTask;
+import br.pe.recife.monier.tafeito.servicerest.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
 import br.pe.recife.monier.tafeito.negocio.Cliente;
 import br.pe.recife.monier.tafeito.negocio.Usuario;
-import br.pe.recife.monier.tafeito.serviceREST.IRESTClientTask;
-import br.pe.recife.monier.tafeito.serviceREST.InserirAcessoRESTClientTask;
+import br.pe.recife.monier.tafeito.servicerest.IRESTClientTask;
+import br.pe.recife.monier.tafeito.servicerest.InserirAcessoRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 import br.pe.recife.monier.tafeito.util.MaskaraCpfCnpj;
 import br.pe.recife.monier.tafeito.util.MaskaraType;
 
 public class ClienteRegistroRESTActivity extends AppCompatActivity implements IRESTClientTask {
 
+    private static final String OPERACAO_VERIFICAR_EMAIL = "VerificarEmail";
     private static final String OPERACAO_INSERIR_ACESSO_CLIENTE = "InserirAcessoCliente";
 
     //@InjectView(R.id.input_name)
@@ -45,7 +49,10 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
     TextView _loginLink;
 
     //Task Async
-    private InserirAcessoRESTClientTask task;
+    private LiberadoPorLoginRESTClientTask taskEmail;
+    private InserirAcessoRESTClientTask taskAcesso;
+
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,7 +94,22 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
     public void chamaSucesso(String operacao, Object retorno) {
 
+        progressDialog.dismiss();
+
         switch (operacao) {
+
+            case OPERACAO_VERIFICAR_EMAIL:
+
+                String name = _nameText.getText().toString();
+                String cpf = _cpfText.getText().toString().replaceAll("\\D", "");
+                String phone = _phoneText.getText().toString();
+                String email = _emailText.getText().toString();
+                String address = _addressText.getText().toString();
+                String password = _passwordText.getText().toString();
+
+                this.registerUsuario(name, cpf, phone, email, address, password);
+
+                break;
 
             case OPERACAO_INSERIR_ACESSO_CLIENTE:
 
@@ -103,6 +125,11 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
         switch (operacao) {
 
+            case OPERACAO_VERIFICAR_EMAIL:
+
+                this.onSignupFailed(retorno);
+                break;
+
             case OPERACAO_INSERIR_ACESSO_CLIENTE:
 
                 this.onSignupFailed(retorno);
@@ -112,36 +139,45 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
         }
     }
 
-    private void signup() {
-
-        if (!validate()) {
-            onSignupFailed(null);
-            return;
-        }
-
-        _signupButton.setEnabled(false);
-
-        String name = _nameText.getText().toString();
-        String cpf = _cpfText.getText().toString().replaceAll("\\D", "");
-        String phone = _phoneText.getText().toString();
-        String email = _emailText.getText().toString();
-        String address = _addressText.getText().toString();
-        String password = _passwordText.getText().toString();
-
-
-        //Cadastrar cliente
+    private void checkEmail(String email) {
 
         try {
 
-            //Investigar como pesquisar email já existente. Talvez trazendo resposta
-            /*
-            boolean existe = fachada.existePorLoginAcesso(email);
-            if (existe) {
-                onSignupFailed(getApplicationContext().getResources().
-                        getText(R.string.registro_email_ja_existente).toString());
+            if (HttpUtil.temConexaoWeb(getApplicationContext())) {
+                if (taskEmail == null || taskEmail.getStatus() != AsyncTask.Status.RUNNING) {
+
+                    //
+                    progressDialog = new ProgressDialog(ClienteRegistroRESTActivity.this, R.style.AppTheme_Dark_Dialog);
+                    progressDialog.setIndeterminate(true);
+                    progressDialog.setMessage(getApplicationContext().getResources().
+                            getText(R.string.login_verificando).toString());
+                    progressDialog.show();
+                    //
+
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_VERIFICAR_EMAIL);
+                    taskEmail = new LiberadoPorLoginRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                            email);
+                    taskEmail.execute();
+                }
             } else {
+
+                throw new NegocioException(getApplicationContext().getResources().
+                        getText(R.string.login_conexaoweb_inexistente).toString());
             }
-            */
+
+
+        } catch (Exception e)
+        {
+            onSignupFailed(e.getMessage());
+        }
+
+    }
+
+    private void registerUsuario(String name, String cpf, String phone, String email,
+                                 String address, String password) {
+
+        //Cadastrar cliente
+        try {
 
             Acesso acesso = new Acesso();
             acesso.setLogin(email);
@@ -156,12 +192,21 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
             ((Cliente) usuario).setCpf(cpf);
 
             if (HttpUtil.temConexaoWeb(getApplicationContext())) {
-                if (task == null || task.getStatus() != AsyncTask.Status.RUNNING) {
+                if (taskAcesso == null || taskAcesso.getStatus() != AsyncTask.Status.RUNNING) {
+
+                    //
+                    progressDialog = new ProgressDialog(ClienteRegistroRESTActivity.this,
+                            R.style.AppTheme_Dark_Dialog);
+                    progressDialog.setIndeterminate(true);
+                    progressDialog.setMessage(getApplicationContext().
+                            getText(R.string.registro_criando_conta).toString());
+                    progressDialog.show();
+                    //
 
                     RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_INSERIR_ACESSO_CLIENTE);
-                    task = new InserirAcessoRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                    taskAcesso = new InserirAcessoRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
                             acesso, usuario);
-                    task.execute();
+                    taskAcesso.execute();
                 }
             } else {
 
@@ -170,8 +215,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
             }
 
 
-        } catch (Exception e) {
-
+        } catch (Exception e)
+        {
             onSignupFailed(e.getMessage());
         }
 
@@ -188,6 +233,20 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
     }
 
+    private void signup() {
+
+        if (!validate()) {
+            onSignupFailed(null);
+            return;
+        }
+
+        _signupButton.setEnabled(false);
+
+        String email = _emailText.getText().toString();
+
+        this.checkEmail(email);
+    }
+
 
     private void onSignupSuccess(Autenticacao autenticacao) {
         _signupButton.setEnabled(true);
@@ -199,6 +258,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
     }
 
     private void onSignupFailed(String message) {
+
+        progressDialog.dismiss();
 
         if (message == null) {
             message =  getApplicationContext().getResources().

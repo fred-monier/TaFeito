@@ -1,5 +1,6 @@
 package br.pe.recife.monier.tafeito.gui.cliente.login;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -12,10 +13,10 @@ import android.widget.Toast;
 
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
-import br.pe.recife.monier.tafeito.serviceREST.RESTClientTaskVO;
+import br.pe.recife.monier.tafeito.servicerest.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
-import br.pe.recife.monier.tafeito.serviceREST.BuscarPorLoginPorSenhaRESTClientTask;
-import br.pe.recife.monier.tafeito.serviceREST.IRESTClientTask;
+import br.pe.recife.monier.tafeito.servicerest.BuscarPorLoginPorSenhaRESTClientTask;
+import br.pe.recife.monier.tafeito.servicerest.IRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 
 public class ClienteLoginRESTActivity extends AppCompatActivity implements IRESTClientTask {
@@ -36,6 +37,8 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
     //Task Async
     private BuscarPorLoginPorSenhaRESTClientTask task;
+
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +93,8 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
     public void chamaSucesso(String operacao, Object retorno) {
 
+        progressDialog.dismiss();
+
         switch (operacao) {
 
             case OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE:
@@ -133,6 +138,14 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
             if (HttpUtil.temConexaoWeb(getApplicationContext())) {
                 if (task == null || task.getStatus() != AsyncTask.Status.RUNNING) {
+
+                    //
+                    progressDialog = new ProgressDialog(ClienteLoginRESTActivity.this, R.style.AppTheme_Dark_Dialog);
+                    progressDialog.setIndeterminate(true);
+                    progressDialog.setMessage(getApplicationContext().getResources().
+                            getText(R.string.login_autenticando).toString());
+                    progressDialog.show();
+                    //
 
                     RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE);
                     task = new BuscarPorLoginPorSenhaRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
@@ -194,6 +207,8 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
     }
 
     private void onLoginFailed(String message) {
+
+        progressDialog.dismiss();
 
         if (message == null) {
             message =  getApplicationContext().getResources().

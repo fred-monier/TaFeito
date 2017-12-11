@@ -1,4 +1,4 @@
-package br.pe.recife.monier.tafeito.serviceREST;
+package br.pe.recife.monier.tafeito.servicerest;
 
 public class RESTClientTaskVO {
 
