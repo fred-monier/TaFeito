@@ -1,6 +1,5 @@
 package br.pe.recife.monier.tafeito.gui.fornecedor.login;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -11,23 +10,19 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
-
-import org.json.JSONObject;
-
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
+import br.pe.recife.monier.tafeito.serviceREST.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
+import br.pe.recife.monier.tafeito.serviceREST.BuscarPorLoginPorSenhaRESTClientTask;
+import br.pe.recife.monier.tafeito.serviceREST.IRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
-import br.pe.recife.monier.tafeito.util.Util;
 
-public class FornecedorLoginRESTActivity extends AppCompatActivity {
+public class FornecedorLoginRESTActivity extends AppCompatActivity implements IRESTClientTask {
 
     public static final String AUTENTICACAO = "AUTENTICACAO";
 
+    private static final String OPERACAO_BUSCAR_POR_LOGIN_SENHA_FORNECEDOR = "BuscarPorLoginSenhaFornecedor";
     private static final int REQUEST_SIGNUP = 0;
 
     EditText _emailText;
@@ -36,7 +31,7 @@ public class FornecedorLoginRESTActivity extends AppCompatActivity {
     TextView _signupLink;
 
     //Task Async
-    private BuscarPorLoginPorSenhaFornRESTClientTask task;
+    private BuscarPorLoginPorSenhaRESTClientTask task;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +83,33 @@ public class FornecedorLoginRESTActivity extends AppCompatActivity {
         moveTaskToBack(true);
     }
 
+    public void chamaSucesso(String operacao, Object retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_BUSCAR_POR_LOGIN_SENHA_FORNECEDOR:
+
+                this.onLoginSuccess((Autenticacao) retorno);
+                break;
+
+            default: break;
+        }
+
+    }
+
+    public void chamaFalha(String operacao, String retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_BUSCAR_POR_LOGIN_SENHA_FORNECEDOR:
+
+                this.onLoginFailed(retorno);
+                break;
+
+            default: break;
+        }
+    }
+
     private void login() {
 
         if (!validate()) {
@@ -107,7 +129,9 @@ public class FornecedorLoginRESTActivity extends AppCompatActivity {
             if (HttpUtil.temConexaoWeb(getApplicationContext())) {
                 if (task == null || task.getStatus() != AsyncTask.Status.RUNNING) {
 
-                    task = new BuscarPorLoginPorSenhaFornRESTClientTask(email, password);
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_BUSCAR_POR_LOGIN_SENHA_FORNECEDOR);
+                    task = new BuscarPorLoginPorSenhaRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                            email, password, true);
                     task.execute();
                 }
             } else {
@@ -173,89 +197,91 @@ public class FornecedorLoginRESTActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
-    private class BuscarPorLoginPorSenhaFornRESTClientTask extends AsyncTask<String, Void, Autenticacao> {
-
-        private final String CAMINHO =
-                //"http://192.168.1.107:8080/TaFeito_Servidor/rest/AcessoService/acessosLoginSenhaFornecedor";
-                "http://187.87.134.250:8080/TaFeito_Servidor/rest/AcessoService/acessosLoginSenhaFornecedor";
-
-        private String login;
-        private String senha;
-
-        private ProgressDialog progressDialog;
-
-        public BuscarPorLoginPorSenhaFornRESTClientTask(String login, String senha) {
-            this.login = login;
-            this.senha = senha;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            progressDialog = new ProgressDialog(FornecedorLoginRESTActivity.this,
-                    R.style.AppTheme_Dark_Dialog);
-            progressDialog.setIndeterminate(true);
-            progressDialog.setMessage(getApplicationContext().getResources().
-                    getText(R.string.login_autenticando).toString());
-            progressDialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(Autenticacao aut) {
-            super.onPostExecute(aut);
-
-            progressDialog.dismiss();
-
-            if (aut != null){
-                onLoginSuccess(aut);
-            }
-            else{
-                onLoginFailed(null);
-            }
-        }
-
-        @Override
-        protected Autenticacao doInBackground(String... params) {
-
-            Autenticacao res = null;
-
-            HttpURLConnection conexao = null;
-
-            try {
-
-                String caminhoPar = CAMINHO + "/" + login + "/" + senha;
-
-                conexao = HttpUtil.conectarGET(caminhoPar);
-                conexao.connect();
-                //
-
-                int resposta = conexao.getResponseCode();
-                if (resposta == HttpURLConnection.HTTP_OK) {
-
-                    InputStream is = conexao.getInputStream();
-                    String str = HttpUtil.bytesParaString(is);
-                    JSONObject jo = new JSONObject(str);
-
-                    Gson gson = new Gson();
-                    res = gson.fromJson(jo.toString(), Autenticacao.class);
-                }
-
-            } catch (Exception e) {
-
-                e.printStackTrace();
-
-            } finally {
-
-                if (conexao != null) {
-                    conexao.disconnect();
-                }
-            }
-
-            return res;
-        }
-
-    }
+//    private class BuscarPorLoginPorSenhaFornRESTClientTask extends AsyncTask<String, Void, Autenticacao> {
+//
+//        private final String CAMINHO =
+//                getApplicationContext().getResources().
+//                        getText(R.string.webREST_URL).toString() +
+//                getApplicationContext().getResources().
+//                        getText(R.string.acessosLoginSenhaFornecedor).toString();
+//
+//        private String login;
+//        private String senha;
+//
+//        private ProgressDialog progressDialog;
+//
+//        public BuscarPorLoginPorSenhaFornRESTClientTask(String login, String senha) {
+//            this.login = login;
+//            this.senha = senha;
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//
+//            progressDialog = new ProgressDialog(FornecedorLoginRESTActivity.this,
+//                    R.style.AppTheme_Dark_Dialog);
+//            progressDialog.setIndeterminate(true);
+//            progressDialog.setMessage(getApplicationContext().getResources().
+//                    getText(R.string.login_autenticando).toString());
+//            progressDialog.show();
+//        }
+//
+//        @Override
+//        protected void onPostExecute(Autenticacao aut) {
+//            super.onPostExecute(aut);
+//
+//            progressDialog.dismiss();
+//
+//            if (aut != null){
+//                onLoginSuccess(aut);
+//            }
+//            else{
+//                onLoginFailed(null);
+//            }
+//        }
+//
+//        @Override
+//        protected Autenticacao doInBackground(String... params) {
+//
+//            Autenticacao res = null;
+//
+//            HttpURLConnection conexao = null;
+//
+//            try {
+//
+//                String caminhoPar = CAMINHO + "/" + login + "/" + senha;
+//
+//                conexao = HttpUtil.conectarGET(caminhoPar);
+//                conexao.connect();
+//                //
+//
+//                int resposta = conexao.getResponseCode();
+//                if (resposta == HttpURLConnection.HTTP_OK) {
+//
+//                    InputStream is = conexao.getInputStream();
+//                    String str = HttpUtil.bytesParaString(is);
+//                    JSONObject jo = new JSONObject(str);
+//
+//                    Gson gson = new Gson();
+//                    res = gson.fromJson(jo.toString(), Autenticacao.class);
+//                }
+//
+//            } catch (Exception e) {
+//
+//                e.printStackTrace();
+//
+//            } finally {
+//
+//                if (conexao != null) {
+//                    conexao.disconnect();
+//                }
+//            }
+//
+//            return res;
+//        }
+//
+//    }
 
 }
 

@@ -1,8 +1,6 @@
 package br.pe.recife.monier.tafeito.gui.cliente.login;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,24 +10,22 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
 import br.pe.recife.monier.tafeito.negocio.Acesso;
+import br.pe.recife.monier.tafeito.serviceREST.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
 import br.pe.recife.monier.tafeito.negocio.Cliente;
 import br.pe.recife.monier.tafeito.negocio.Usuario;
+import br.pe.recife.monier.tafeito.serviceREST.IRESTClientTask;
+import br.pe.recife.monier.tafeito.serviceREST.InserirAcessoRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 import br.pe.recife.monier.tafeito.util.MaskaraCpfCnpj;
 import br.pe.recife.monier.tafeito.util.MaskaraType;
-import br.pe.recife.monier.tafeito.util.Util;
 
-public class ClienteRegistroRESTActivity extends AppCompatActivity {
+public class ClienteRegistroRESTActivity extends AppCompatActivity implements IRESTClientTask {
+
+    private static final String OPERACAO_INSERIR_ACESSO_CLIENTE = "InserirAcessoCliente";
 
     //@InjectView(R.id.input_name)
     EditText _nameText;
@@ -49,7 +45,7 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity {
     TextView _loginLink;
 
     //Task Async
-    private InserirAcessoClienteRESTClientTask task;
+    private InserirAcessoRESTClientTask task;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +83,33 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    public void chamaSucesso(String operacao, Object retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_INSERIR_ACESSO_CLIENTE:
+
+                this.onSignupSuccess((Autenticacao) retorno);
+                break;
+
+            default: break;
+        }
+
+    }
+
+    public void chamaFalha(String operacao, String retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_INSERIR_ACESSO_CLIENTE:
+
+                this.onSignupFailed(retorno);
+                break;
+
+            default: break;
+        }
     }
 
     private void signup() {
@@ -135,7 +158,9 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity {
             if (HttpUtil.temConexaoWeb(getApplicationContext())) {
                 if (task == null || task.getStatus() != AsyncTask.Status.RUNNING) {
 
-                    task = new InserirAcessoClienteRESTClientTask(acesso, (Cliente) usuario);
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_INSERIR_ACESSO_CLIENTE);
+                    task = new InserirAcessoRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                            acesso, usuario);
                     task.execute();
                 }
             } else {
@@ -245,110 +270,112 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity {
         return valid;
     }
 
-    private class InserirAcessoClienteRESTClientTask extends AsyncTask<String, Void, String> {
-
-        private final String CAMINHO =
-                getApplicationContext().getResources().
-                        getText(R.string.webREST_interno_URL_acessosCliente).toString();
-
-        private Acesso acesso;
-        private Cliente cliente;
-
-        private ProgressDialog progressDialog;
-
-        public InserirAcessoClienteRESTClientTask(Acesso acesso, Cliente cliente) {
-            this.acesso = acesso;
-            this.cliente = cliente;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            progressDialog = new ProgressDialog(ClienteRegistroRESTActivity.this,
-                    R.style.AppTheme_Dark_Dialog);
-            progressDialog.setIndeterminate(true);
-            progressDialog.setMessage(getApplicationContext().getResources().
-                    getText(R.string.registro_criando_conta).toString());
-            progressDialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-
-            progressDialog.dismiss();
-
-            if (s != null && !s.equals(HttpUtil.FAILURE_RESULT)) {
-
-                Autenticacao aut = new Autenticacao();
-                aut.setIdAcesso(HttpUtil.extrairIdResult(s));
-                aut.setToken("");
-
-                onSignupSuccess(new Autenticacao());
-            }
-            else{
-                onSignupFailed(null);
-            }
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-
-            String res = null;
-
-            HttpURLConnection conexao = null;
-
-            try {
-
-                conexao = HttpUtil.conectarPOST(CAMINHO);
-
-                //Building URI
-                Uri.Builder builder = new Uri.Builder()
-                        .appendQueryParameter("login", acesso.getLogin())
-                        .appendQueryParameter("senha", acesso.getSenha())
-                        .appendQueryParameter("email", cliente.getEmail())
-                        .appendQueryParameter("endereco", cliente.getEndereco())
-                        .appendQueryParameter("habilitado", cliente.isHabilitado() + "")
-                        .appendQueryParameter("nome", cliente.getNome())
-                        .appendQueryParameter("telefone", cliente.getTelefone() + "")
-                        .appendQueryParameter("cpf", cliente.getCpf());
-
-                //Getting object of OutputStream from urlConnection to write some data to stream
-                OutputStream outputStream = conexao.getOutputStream();
-
-                //Writer to write data to OutputStream
-                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
-                bufferedWriter.write(builder.build().getEncodedQuery());
-                bufferedWriter.flush();
-                bufferedWriter.close();
-                outputStream.close();
-
-                conexao.connect();
-                //
-
-                int resposta = conexao.getResponseCode();
-                if (resposta == HttpURLConnection.HTTP_OK) {
-
-                    InputStream is = conexao.getInputStream();
-
-                    res = HttpUtil.bytesParaString(is);
-
-                }
-
-            } catch (Exception e) {
-
-                e.printStackTrace();
-
-            } finally {
-
-                if (conexao != null) {
-                    conexao.disconnect();
-                }
-            }
-
-            return res;
-        }
-
-    }
+//    private class InserirAcessoClienteRESTClientTask extends AsyncTask<String, Void, String> {
+//
+//        private final String CAMINHO =
+//                getApplicationContext().getResources().
+//                    getText(R.string.webREST_URL).toString() +
+//                getApplicationContext().getResources().
+//                    getText(R.string.acessosCliente).toString();
+//
+//        private Acesso acesso;
+//        private Cliente cliente;
+//
+//        private ProgressDialog progressDialog;
+//
+//        public InserirAcessoClienteRESTClientTask(Acesso acesso, Cliente cliente) {
+//            this.acesso = acesso;
+//            this.cliente = cliente;
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//
+//            progressDialog = new ProgressDialog(ClienteRegistroRESTActivity.this,
+//                    R.style.AppTheme_Dark_Dialog);
+//            progressDialog.setIndeterminate(true);
+//            progressDialog.setMessage(getApplicationContext().getResources().
+//                    getText(R.string.registro_criando_conta).toString());
+//            progressDialog.show();
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String s) {
+//            super.onPostExecute(s);
+//
+//            progressDialog.dismiss();
+//
+//            if (s != null && !s.equals(HttpUtil.FAILURE_RESULT)) {
+//
+//                Autenticacao aut = new Autenticacao();
+//                aut.setIdAcesso(HttpUtil.extrairIdResult(s));
+//                aut.setToken("");
+//
+//                onSignupSuccess(new Autenticacao());
+//            }
+//            else{
+//                onSignupFailed(null);
+//            }
+//        }
+//
+//        @Override
+//        protected String doInBackground(String... params) {
+//
+//            String res = null;
+//
+//            HttpURLConnection conexao = null;
+//
+//            try {
+//
+//                conexao = HttpUtil.conectarPOST(CAMINHO);
+//
+//                //Building URI
+//                Uri.Builder builder = new Uri.Builder()
+//                        .appendQueryParameter("login", acesso.getLogin())
+//                        .appendQueryParameter("senha", acesso.getSenha())
+//                        .appendQueryParameter("email", cliente.getEmail())
+//                        .appendQueryParameter("endereco", cliente.getEndereco())
+//                        .appendQueryParameter("habilitado", cliente.isHabilitado() + "")
+//                        .appendQueryParameter("nome", cliente.getNome())
+//                        .appendQueryParameter("telefone", cliente.getTelefone() + "")
+//                        .appendQueryParameter("cpf", cliente.getCpf());
+//
+//                //Getting object of OutputStream from urlConnection to write some data to stream
+//                OutputStream outputStream = conexao.getOutputStream();
+//
+//                //Writer to write data to OutputStream
+//                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+//                bufferedWriter.write(builder.build().getEncodedQuery());
+//                bufferedWriter.flush();
+//                bufferedWriter.close();
+//                outputStream.close();
+//
+//                conexao.connect();
+//                //
+//
+//                int resposta = conexao.getResponseCode();
+//                if (resposta == HttpURLConnection.HTTP_OK) {
+//
+//                    InputStream is = conexao.getInputStream();
+//
+//                    res = HttpUtil.bytesParaString(is);
+//
+//                }
+//
+//            } catch (Exception e) {
+//
+//                e.printStackTrace();
+//
+//            } finally {
+//
+//                if (conexao != null) {
+//                    conexao.disconnect();
+//                }
+//            }
+//
+//            return res;
+//        }
+//
+//    }
 }

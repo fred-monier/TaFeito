@@ -1,8 +1,6 @@
 package br.pe.recife.monier.tafeito.gui.fornecedor.login;
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -12,23 +10,22 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.BufferedWriter;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.HttpURLConnection;
-
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
 import br.pe.recife.monier.tafeito.negocio.Acesso;
+import br.pe.recife.monier.tafeito.serviceREST.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
 import br.pe.recife.monier.tafeito.negocio.Fornecedor;
 import br.pe.recife.monier.tafeito.negocio.Usuario;
+import br.pe.recife.monier.tafeito.serviceREST.IRESTClientTask;
+import br.pe.recife.monier.tafeito.serviceREST.InserirAcessoRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 import br.pe.recife.monier.tafeito.util.MaskaraCpfCnpj;
 import br.pe.recife.monier.tafeito.util.MaskaraType;
 
-public class FornecedorRegistroRESTActivity extends AppCompatActivity {
+public class FornecedorRegistroRESTActivity extends AppCompatActivity implements IRESTClientTask {
+
+    private static final String OPERACAO_INSERIR_ACESSO_FORNECEDOR = "InserirAcessoFornecedor";
 
     EditText _nameText;
     EditText _cnpjText;
@@ -40,7 +37,7 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
     TextView _loginLink;
 
     //Task Async
-    private InserirAcessoFornecedorRESTClientTask task;
+    private InserirAcessoRESTClientTask task;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -80,8 +77,35 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
         });
     }
 
-    private void signup()
-    {
+    public void chamaSucesso(String operacao, Object retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_INSERIR_ACESSO_FORNECEDOR:
+
+                this.onSignupSuccess((Autenticacao) retorno);
+                break;
+
+            default: break;
+        }
+
+    }
+
+    public void chamaFalha(String operacao, String retorno) {
+
+        switch (operacao) {
+
+            case OPERACAO_INSERIR_ACESSO_FORNECEDOR:
+
+                this.onSignupFailed(retorno);
+                break;
+
+            default: break;
+        }
+    }
+
+    private void signup() {
+
         if (!validate())
         {
             onSignupFailed(null);
@@ -126,7 +150,9 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
             if (HttpUtil.temConexaoWeb(getApplicationContext())) {
                 if (task == null || task.getStatus() != AsyncTask.Status.RUNNING) {
 
-                    task = new InserirAcessoFornecedorRESTClientTask(acesso, (Fornecedor) usuario);
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_INSERIR_ACESSO_FORNECEDOR);
+                    task = new InserirAcessoRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                            acesso, usuario);
                     task.execute();
                 }
             } else {
@@ -143,9 +169,8 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
 
     }
 
+    private void onSignupSuccess(Autenticacao autenticacao) {
 
-    private void onSignupSuccess(Autenticacao autenticacao)
-    {
         _signupButton.setEnabled(true);
 
         Intent devolve = getIntent();
@@ -154,8 +179,7 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
         finish();
     }
 
-    private void onSignupFailed(String message)
-    {
+    private void onSignupFailed(String message) {
 
         if (message == null)
         {
@@ -167,8 +191,8 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
         _signupButton.setEnabled(true);
     }
 
-    private boolean validate()
-    {
+    private boolean validate() {
+
         boolean valid = true;
 
         String name     = _nameText.getText().toString();
@@ -236,110 +260,112 @@ public class FornecedorRegistroRESTActivity extends AppCompatActivity {
         return valid;
     }
 
-    private class InserirAcessoFornecedorRESTClientTask extends AsyncTask<String, Void, String> {
-
-        private final String CAMINHO =
-                getApplicationContext().getResources().
-                        getText(R.string.webREST_interno_URL_acessosFornecedor).toString();
-
-        private Acesso acesso;
-        private Fornecedor fornecedor;
-
-        private ProgressDialog progressDialog;
-
-        public InserirAcessoFornecedorRESTClientTask(Acesso acesso, Fornecedor fornecedor) {
-            this.acesso = acesso;
-            this.fornecedor = fornecedor;
-        }
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-
-            progressDialog = new ProgressDialog(FornecedorRegistroRESTActivity.this,
-                    R.style.AppTheme_Dark_Dialog);
-            progressDialog.setIndeterminate(true);
-            progressDialog.setMessage(getApplicationContext().getResources().
-                    getText(R.string.registro_criando_conta).toString());
-            progressDialog.show();
-        }
-
-        @Override
-        protected void onPostExecute(String s) {
-            super.onPostExecute(s);
-
-            progressDialog.dismiss();
-
-            if (s != null && !s.equals(HttpUtil.FAILURE_RESULT)) {
-
-                Autenticacao aut = new Autenticacao();
-                aut.setIdAcesso(HttpUtil.extrairIdResult(s));
-                aut.setToken("");
-
-                onSignupSuccess(new Autenticacao());
-            }
-            else{
-                onSignupFailed(null);
-            }
-        }
-
-        @Override
-        protected String doInBackground(String... params) {
-
-            String res = null;
-
-            HttpURLConnection conexao = null;
-
-            try {
-
-                conexao = HttpUtil.conectarPOST(CAMINHO);
-
-                //Building URI
-                Uri.Builder builder = new Uri.Builder()
-                        .appendQueryParameter("login", acesso.getLogin())
-                        .appendQueryParameter("senha", acesso.getSenha())
-                        .appendQueryParameter("email", fornecedor.getEmail())
-                        .appendQueryParameter("endereco", fornecedor.getEndereco())
-                        .appendQueryParameter("habilitado", fornecedor.isHabilitado() + "")
-                        .appendQueryParameter("nome", fornecedor.getNome())
-                        .appendQueryParameter("telefone", fornecedor.getTelefone() + "")
-                        .appendQueryParameter("cnpj", fornecedor.getCnpj());
-
-                //Getting object of OutputStream from urlConnection to write some data to stream
-                OutputStream outputStream = conexao.getOutputStream();
-
-                //Writer to write data to OutputStream
-                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
-                bufferedWriter.write(builder.build().getEncodedQuery());
-                bufferedWriter.flush();
-                bufferedWriter.close();
-                outputStream.close();
-
-                conexao.connect();
-                //
-
-                int resposta = conexao.getResponseCode();
-                if (resposta == HttpURLConnection.HTTP_OK) {
-
-                    InputStream is = conexao.getInputStream();
-
-                    res = HttpUtil.bytesParaString(is);
-
-                }
-
-            } catch (Exception e) {
-
-                e.printStackTrace();
-
-            } finally {
-
-                if (conexao != null) {
-                    conexao.disconnect();
-                }
-            }
-
-            return res;
-        }
-
-    }
+//    private class InserirAcessoFornecedorRESTClientTask extends AsyncTask<String, Void, String> {
+//
+//        private final String CAMINHO =
+//                getApplicationContext().getResources().
+//                        getText(R.string.webREST_interno_URL).toString() +
+//                getApplicationContext().getResources().
+//                        getText(R.string.acessosFornecedor).toString();
+//
+//        private Acesso acesso;
+//        private Fornecedor fornecedor;
+//
+//        private ProgressDialog progressDialog;
+//
+//        public InserirAcessoFornecedorRESTClientTask(Acesso acesso, Fornecedor fornecedor) {
+//            this.acesso = acesso;
+//            this.fornecedor = fornecedor;
+//        }
+//
+//        @Override
+//        protected void onPreExecute() {
+//            super.onPreExecute();
+//
+//            progressDialog = new ProgressDialog(FornecedorRegistroRESTActivity.this,
+//                    R.style.AppTheme_Dark_Dialog);
+//            progressDialog.setIndeterminate(true);
+//            progressDialog.setMessage(getApplicationContext().getResources().
+//                    getText(R.string.registro_criando_conta).toString());
+//            progressDialog.show();
+//        }
+//
+//        @Override
+//        protected void onPostExecute(String s) {
+//            super.onPostExecute(s);
+//
+//            progressDialog.dismiss();
+//
+//            if (s != null && !s.equals(HttpUtil.FAILURE_RESULT)) {
+//
+//                Autenticacao aut = new Autenticacao();
+//                aut.setIdAcesso(HttpUtil.extrairIdResult(s));
+//                aut.setToken("");
+//
+//                onSignupSuccess(new Autenticacao());
+//            }
+//            else{
+//                onSignupFailed(null);
+//            }
+//        }
+//
+//        @Override
+//        protected String doInBackground(String... params) {
+//
+//            String res = null;
+//
+//            HttpURLConnection conexao = null;
+//
+//            try {
+//
+//                conexao = HttpUtil.conectarPOST(CAMINHO);
+//
+//                //Building URI
+//                Uri.Builder builder = new Uri.Builder()
+//                        .appendQueryParameter("login", acesso.getLogin())
+//                        .appendQueryParameter("senha", acesso.getSenha())
+//                        .appendQueryParameter("email", fornecedor.getEmail())
+//                        .appendQueryParameter("endereco", fornecedor.getEndereco())
+//                        .appendQueryParameter("habilitado", fornecedor.isHabilitado() + "")
+//                        .appendQueryParameter("nome", fornecedor.getNome())
+//                        .appendQueryParameter("telefone", fornecedor.getTelefone() + "")
+//                        .appendQueryParameter("cnpj", fornecedor.getCnpj());
+//
+//                //Getting object of OutputStream from urlConnection to write some data to stream
+//                OutputStream outputStream = conexao.getOutputStream();
+//
+//                //Writer to write data to OutputStream
+//                BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream,"UTF-8"));
+//                bufferedWriter.write(builder.build().getEncodedQuery());
+//                bufferedWriter.flush();
+//                bufferedWriter.close();
+//                outputStream.close();
+//
+//                conexao.connect();
+//                //
+//
+//                int resposta = conexao.getResponseCode();
+//                if (resposta == HttpURLConnection.HTTP_OK) {
+//
+//                    InputStream is = conexao.getInputStream();
+//
+//                    res = HttpUtil.bytesParaString(is);
+//
+//                }
+//
+//            } catch (Exception e) {
+//
+//                e.printStackTrace();
+//
+//            } finally {
+//
+//                if (conexao != null) {
+//                    conexao.disconnect();
+//                }
+//            }
+//
+//            return res;
+//        }
+//
+//    }
 }
