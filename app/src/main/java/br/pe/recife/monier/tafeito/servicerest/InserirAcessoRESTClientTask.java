@@ -90,7 +90,6 @@ public class InserirAcessoRESTClientTask extends AsyncTask<String, Void, String>
             Uri.Builder builder = new Uri.Builder()
                     .appendQueryParameter("login", this.acesso.getLogin())
                     .appendQueryParameter("senha", this.acesso.getSenha())
-                    .appendQueryParameter("email", this.usuario.getEmail())
                     .appendQueryParameter("endereco", this.usuario.getEndereco())
                     .appendQueryParameter("habilitado", this.usuario.isHabilitado() + "")
                     .appendQueryParameter("nome", this.usuario.getNome())
