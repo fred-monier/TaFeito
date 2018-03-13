@@ -36,11 +36,11 @@
     <string name="registro_endereco_invalido">no máximo 200 caracteres alfanuméricos</string>
 
     <!-- Servidor Web REST-->
-    <!-- internoHome: http://192.168.1.107:8080/TaFeito_Servidor/rest
+    <!-- internoHome: http://10.0.2.2:8080/TaFeito_Servidor/rest
          internoSurfix: http://172.16.101.43:8080/TaFeito_Servidor/rest
          externo: http://187.87.134.250:8080/TaFeito_Servidor/rest -->
     <string name="webREST_URL"
-        translatable="false">http://172.16.101.43:8080/TaFeito_Servidor/rest</string>
+        translatable="false">http://10.0.2.2:8080/TaFeito_Servidor/rest</string>
 
     <!-- AcessoService-->
     <string name="liberadoLogin"

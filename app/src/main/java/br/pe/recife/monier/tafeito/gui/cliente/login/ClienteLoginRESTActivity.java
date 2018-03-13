@@ -208,7 +208,9 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
     private void onLoginFailed(String message) {
 
-        progressDialog.dismiss();
+        if  (progressDialog != null) {
+            progressDialog.dismiss();
+        }
 
         if (message == null) {
             message =  getApplicationContext().getResources().
