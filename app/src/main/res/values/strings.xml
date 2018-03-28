@@ -11,6 +11,7 @@
     <string name="login_autenticar">Entrar</string>
     <string name="login_verificando">Verificando email...</string>
     <string name="login_autenticando">Autenticando...</string>
+    <string name="login_invalido">Email/Senha inválido</string>
     <string name="login_falhou">Falha na autenticação</string>
     <string name="login_email_invalido">email inválido</string>
     <string name="login_senha_tamanho_invalido">entre 4 e 10 caracteres alfanuméricos</string>
@@ -53,5 +54,13 @@
         translatable="false">/AcessoService/acessosLoginSenhaFornecedor</string>
     <string name="acessosLoginSenhaCliente"
         translatable="false">/AcessoService/acessosLoginSenhaCliente</string>
+
+    <!-- UsuarioController-->
+    <string name="usuarioRegistrar"
+        translatable="false">/usuario/registrar</string>
+    <string name="usuarioLiberar"
+        translatable="false">/usuario/liberar</string>
+    <string name="usuarioAutenticar"
+        translatable="false">/usuario/autenticar</string>
 
 </resources>

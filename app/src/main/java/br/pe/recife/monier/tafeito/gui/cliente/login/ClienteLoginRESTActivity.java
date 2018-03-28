@@ -13,17 +13,17 @@ import android.widget.Toast;
 
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
-import br.pe.recife.monier.tafeito.servicerest.RESTClientTaskVO;
+import br.pe.recife.monier.tafeito.clientrest.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
-import br.pe.recife.monier.tafeito.servicerest.BuscarPorLoginPorSenhaRESTClientTask;
-import br.pe.recife.monier.tafeito.servicerest.IRESTClientTask;
+import br.pe.recife.monier.tafeito.clientrest.IRESTClient;
+import br.pe.recife.monier.tafeito.clientrest.UsuarioAutenticarRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 
-public class ClienteLoginRESTActivity extends AppCompatActivity implements IRESTClientTask {
+public class ClienteLoginRESTActivity extends AppCompatActivity implements IRESTClient {
 
     public static final String AUTENTICACAO = "AUTENTICACAO";
 
-    private static final String OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE = "BuscarPorLoginSenhaCLIENTE";
+    private static final String OPERACAO_USUARIO_AUTENTICAR = "UsuarioAutenticar";
     private static final int REQUEST_SIGNUP = 0;
 
     //@InjectView(R.id.input_email)
@@ -36,7 +36,7 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
     TextView _signupLink;
 
     //Task Async
-    private BuscarPorLoginPorSenhaRESTClientTask task;
+    private UsuarioAutenticarRESTClientTask task;
 
     private ProgressDialog progressDialog;
 
@@ -97,7 +97,7 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
         switch (operacao) {
 
-            case OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE:
+            case OPERACAO_USUARIO_AUTENTICAR:
 
                 this.onLoginSuccess((Autenticacao) retorno);
                 break;
@@ -111,7 +111,7 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
 
         switch (operacao) {
 
-            case OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE:
+            case OPERACAO_USUARIO_AUTENTICAR:
 
                 this.onLoginFailed(retorno);
                 break;
@@ -147,8 +147,8 @@ public class ClienteLoginRESTActivity extends AppCompatActivity implements IREST
                     progressDialog.show();
                     //
 
-                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_BUSCAR_POR_LOGIN_SENHA_CLIENTE);
-                    task = new BuscarPorLoginPorSenhaRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_USUARIO_AUTENTICAR);
+                    task = new UsuarioAutenticarRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
                             email, password, false);
                     task.execute();
                 }

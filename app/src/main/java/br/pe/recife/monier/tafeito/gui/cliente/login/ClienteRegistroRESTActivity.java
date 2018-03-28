@@ -14,22 +14,21 @@ import android.widget.Toast;
 import br.pe.recife.monier.tafeito.R;
 import br.pe.recife.monier.tafeito.excecao.NegocioException;
 import br.pe.recife.monier.tafeito.negocio.Acesso;
-import br.pe.recife.monier.tafeito.negocio.Fornecedor;
-import br.pe.recife.monier.tafeito.servicerest.LiberadoPorLoginRESTClientTask;
-import br.pe.recife.monier.tafeito.servicerest.RESTClientTaskVO;
+import br.pe.recife.monier.tafeito.clientrest.RESTClientTaskVO;
 import br.pe.recife.monier.tafeito.negocio.Autenticacao;
 import br.pe.recife.monier.tafeito.negocio.Cliente;
 import br.pe.recife.monier.tafeito.negocio.Usuario;
-import br.pe.recife.monier.tafeito.servicerest.IRESTClientTask;
-import br.pe.recife.monier.tafeito.servicerest.InserirAcessoRESTClientTask;
+import br.pe.recife.monier.tafeito.clientrest.IRESTClient;
+import br.pe.recife.monier.tafeito.clientrest.UsuarioLiberarRESTClientTask;
+import br.pe.recife.monier.tafeito.clientrest.UsuarioRegistrarRESTClientTask;
 import br.pe.recife.monier.tafeito.util.HttpUtil;
 import br.pe.recife.monier.tafeito.util.MaskaraCpfCnpj;
 import br.pe.recife.monier.tafeito.util.MaskaraType;
 
-public class ClienteRegistroRESTActivity extends AppCompatActivity implements IRESTClientTask {
+public class ClienteRegistroRESTActivity extends AppCompatActivity implements IRESTClient {
 
-    private static final String OPERACAO_VERIFICAR_EMAIL = "VerificarEmail";
-    private static final String OPERACAO_INSERIR_ACESSO_CLIENTE = "InserirAcessoCliente";
+    private static final String OPERACAO_USUARIO_LIBERAR = "UsuarioLiberar";
+    private static final String OPERACAO_USUARIO_REGISTRAR = "UsuarioRegistrar";
 
     //@InjectView(R.id.input_name)
     EditText _nameText;
@@ -49,8 +48,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
     TextView _loginLink;
 
     //Task Async
-    private LiberadoPorLoginRESTClientTask taskEmail;
-    private InserirAcessoRESTClientTask taskAcesso;
+    private UsuarioLiberarRESTClientTask taskEmail;
+    private UsuarioRegistrarRESTClientTask taskAcesso;
 
     private ProgressDialog progressDialog;
 
@@ -98,7 +97,7 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
         switch (operacao) {
 
-            case OPERACAO_VERIFICAR_EMAIL:
+            case OPERACAO_USUARIO_LIBERAR:
 
                 String name = _nameText.getText().toString();
                 String cpf = _cpfText.getText().toString().replaceAll("\\D", "");
@@ -111,7 +110,7 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
                 break;
 
-            case OPERACAO_INSERIR_ACESSO_CLIENTE:
+            case OPERACAO_USUARIO_REGISTRAR:
 
                 this.onSignupSuccess((Autenticacao) retorno);
                 break;
@@ -125,12 +124,12 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
 
         switch (operacao) {
 
-            case OPERACAO_VERIFICAR_EMAIL:
+            case OPERACAO_USUARIO_LIBERAR:
 
                 this.onSignupFailed(retorno);
                 break;
 
-            case OPERACAO_INSERIR_ACESSO_CLIENTE:
+            case OPERACAO_USUARIO_REGISTRAR:
 
                 this.onSignupFailed(retorno);
                 break;
@@ -154,8 +153,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
                     progressDialog.show();
                     //
 
-                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_VERIFICAR_EMAIL);
-                    taskEmail = new LiberadoPorLoginRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_USUARIO_LIBERAR);
+                    taskEmail = new UsuarioLiberarRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
                             email);
                     taskEmail.execute();
                 }
@@ -203,8 +202,8 @@ public class ClienteRegistroRESTActivity extends AppCompatActivity implements IR
                     progressDialog.show();
                     //
 
-                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_INSERIR_ACESSO_CLIENTE);
-                    taskAcesso = new InserirAcessoRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
+                    RESTClientTaskVO vRESTClientTaskVO = new RESTClientTaskVO(this, OPERACAO_USUARIO_REGISTRAR);
+                    taskAcesso = new UsuarioRegistrarRESTClientTask(vRESTClientTaskVO, getApplicationContext(),
                             acesso, usuario);
                     taskAcesso.execute();
                 }

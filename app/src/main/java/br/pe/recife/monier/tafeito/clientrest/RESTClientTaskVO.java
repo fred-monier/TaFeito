@@ -1,20 +1,20 @@
-package br.pe.recife.monier.tafeito.servicerest;
+package br.pe.recife.monier.tafeito.clientrest;
 
 public class RESTClientTaskVO {
 
-    private IRESTClientTask clienteTask;
+    private IRESTClient clienteTask;
     private String operacao;
 
-    public RESTClientTaskVO(IRESTClientTask clienteTask, String operacao) {
+    public RESTClientTaskVO(IRESTClient clienteTask, String operacao) {
         this.clienteTask = clienteTask;
         this.operacao = operacao;
     }
 
-    public IRESTClientTask getClienteTask() {
+    public IRESTClient getClienteTask() {
         return clienteTask;
     }
 
-    public void setClienteTask(IRESTClientTask clienteTask) {
+    public void setClienteTask(IRESTClient clienteTask) {
         this.clienteTask = clienteTask;
     }
 

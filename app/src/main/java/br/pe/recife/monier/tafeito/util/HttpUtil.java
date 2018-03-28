@@ -16,12 +16,6 @@ import java.net.URL;
 
 public class HttpUtil {
 
-    public static final String SUCCESS_RESULT = "<result>success</result>";
-    public static final String FAILURE_RESULT = "<result>failure</result>";
-
-    private static final String RESULT_BEGIN = "<result>";
-    private static final String RESULT_END = "</result>";
-
     public static boolean temConexaoWeb(Context ctx) {
         boolean res = false;
 
@@ -84,16 +78,5 @@ public class HttpUtil {
         return new String(buferzao.toByteArray(), "UTF-8");
     }
 
-
-    public static int extrairIdResult(String result) {
-
-        int res = 0;
-
-        int pos = result.indexOf(RESULT_END);
-        String numero = result.substring(RESULT_BEGIN.length(), pos);
-        res = Integer.valueOf(numero);
-
-        return res;
-    }
 
 }
